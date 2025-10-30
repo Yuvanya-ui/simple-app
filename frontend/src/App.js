@@ -1,78 +1,67 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import Navbar from "./components/Navbar";
+import ItemForm from "./components/ItemForm";
+import ItemList from "./components/ItemList";
+import "./index.css";
 
-function App() {
-  const [notes, setNotes] = useState([]);
-  const [newNote, setNewNote] = useState({ title: "", content: "" });
+const App = () => {
+  const [items, setItems] = useState([]);
 
-  useEffect(() => {
-    fetchNotes();
-  }, []);
-
-  const fetchNotes = async () => {
+  // Fetch all items
+  const fetchItems = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/notes");
-      setNotes(res.data);
-    } catch (error) {
-      console.error("Error fetching notes:", error);
+      const res = await axios.get("http://localhost:5000/api/items");
+      setItems(res.data);
+    } catch (err) {
+      console.error("Error fetching items:", err);
+      alert("Backend not connected or network error.");
     }
   };
 
-  const addNote = async () => {
-    if (!newNote.title || !newNote.content) return;
+  useEffect(() => {
+    fetchItems();
+  }, []);
+
+  // Add new item
+  const addItem = async (newItem) => {
     try {
-      await axios.post("http://localhost:5000/api/notes", newNote);
-      setNewNote({ title: "", content: "" });
-      fetchNotes();
-    } catch (error) {
-      console.error("Error adding note:", error);
+      await axios.post("http://localhost:5000/api/items", newItem);
+      fetchItems();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Update item
+  const updateItem = async (id, updatedItem) => {
+    try {
+      await axios.put(`http://localhost:5000/api/items/${id}`, updatedItem);
+      fetchItems();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Delete item
+  const deleteItem = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/items/${id}`);
+      fetchItems();
+    } catch (err) {
+      console.error(err);
     }
   };
 
   return (
-    <div style={{ margin: "40px auto", width: "50%", textAlign: "center" }}>
-      <h1>📝 Simple Notes App</h1>
-
-      <input
-        type="text"
-        placeholder="Title"
-        value={newNote.title}
-        onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
-        style={{ padding: "10px", width: "80%", margin: "10px" }}
-      />
-      <br />
-      <textarea
-        placeholder="Content"
-        value={newNote.content}
-        onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
-        style={{ padding: "10px", width: "80%", height: "100px", margin: "10px" }}
-      ></textarea>
-      <br />
-      <button onClick={addNote} style={{ padding: "10px 20px" }}>
-        Add Note
-      </button>
-
-      <h2 style={{ marginTop: "30px" }}>📚 Notes List</h2>
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {notes.map((note) => (
-          <li
-            key={note._id}
-            style={{
-              border: "1px solid gray",
-              borderRadius: "10px",
-              padding: "15px",
-              margin: "10px auto",
-              width: "80%",
-              textAlign: "left",
-            }}
-          >
-            <strong>{note.title}</strong>
-            <p>{note.content}</p>
-          </li>
-        ))}
-      </ul>
+    <div>
+      <Navbar />
+      <div className="container">
+        <ItemForm addItem={addItem} />
+        <ItemList items={items} onUpdate={updateItem} onDelete={deleteItem} />
+      </div>
     </div>
   );
-}
+};
 
 export default App;
